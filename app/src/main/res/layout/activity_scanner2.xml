@@ -13,15 +13,31 @@
             android:layout_height="0dp" android:id="@+id/linearLayout3" app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintBottom_toBottomOf="parent">
+        <ScrollView android:layout_width="match_parent" android:layout_height="390dp">
+            <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="111dp" android:id="@+id/bitmapsLayout">
+            </LinearLayout>
+        </ScrollView>
         <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" android:id="@+id/imageView"
                 android:layout_marginTop="0dp" android:layout_marginEnd="0dp"
         />
+        <Button
+                android:text="Выбрать область"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/areaSelection"/>
+        <Button
+                android:text="Предобработка"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/button"/>
         <TextView
                 android:text="Test LOl"
-                android:layout_width="300dp"
-                android:layout_height="60dp" android:id="@+id/infoView"
+                android:textIsSelectable="true"
+                android:layout_width="388dp"
+                android:layout_height="125dp" android:id="@+id/infoView"
                 android:textSize="14sp" android:layout_marginTop="10dp"
                 android:layout_marginBottom="40dp"
                 android:layout_marginStart="16dp" android:layout_marginEnd="16dp"/>

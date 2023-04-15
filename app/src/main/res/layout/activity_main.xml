@@ -52,6 +52,12 @@
                 android:layout_marginLeft="136dp"
                 android:layout_marginTop="0dp"
         />
+        <ImageButton
+                android:layout_width="wrap_content"
+                android:onClick="settingsSet"
+                android:layout_height="wrap_content" app:srcCompat="@android:drawable/ic_lock_lock"
+                android:layout_marginLeft="10dp"
+                android:id="@+id/settingsButton"/>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -18,19 +18,14 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/choosenScan"
                 android:layout_marginTop="0dp" android:layout_marginStart="0dp"/>
-        <TextView
-                android:text="Test LOl"
-                android:layout_width="300dp"
-                android:layout_height="60dp" android:id="@+id/infoView2"
-                android:textSize="14sp" android:layout_marginTop="10dp"
-                android:layout_marginBottom="40dp"
-                android:layout_marginStart="16dp" android:layout_marginEnd="16dp"/>
-        <ImageButton
-                android:layout_width="54dp"
-                android:layout_height="54dp" app:srcCompat="?attr/homeAsUpIndicator" android:id="@+id/returnFromGallery"
-                android:layout_marginStart="16dp"
-                android:layout_marginBottom="28dp" tools:ignore="SpeakableTextPresentCheck"
-                android:onClick="returnFromGalleryClick"/>
+        <ScrollView android:layout_width="match_parent" android:layout_height="330dp">
+            <LinearLayout
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="10dp" android:id="@+id/bitmapsLayout">
+            </LinearLayout>
+        </ScrollView>
         <Button
                 android:text="Выбрать область"
                 android:layout_width="match_parent"
@@ -40,18 +35,27 @@
                 android:text="Предобработка"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" android:id="@+id/preprocess"/>
-        <LinearLayout
-                android:orientation="vertical"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_marginTop="10dp" android:id="@+id/bitmapsLayout">
-        </LinearLayout>
+        <TextView
+                android:text="Test LOl"
+                android:textIsSelectable="true"
+                android:layout_width="393dp"
+                android:layout_height="193dp" android:id="@+id/infoView2"
+                android:textSize="14sp" android:layout_marginTop="10dp"
+                android:layout_marginBottom="40dp"
+                android:layout_marginStart="16dp" android:layout_marginEnd="16dp"/>
         <com.theartofdev.edmodo.cropper.CropImageView
-                xmlns:custom="http://schemas.android.com/apk/res-auto"
                 android:id="@+id/cropImageView"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"/>
+                android:layout_height="107dp"
+                android:layout_weight="1">
+            <ImageButton
+                    android:layout_width="54dp"
+                    android:layout_height="54dp" app:srcCompat="?attr/homeAsUpIndicator"
+                    android:id="@+id/returnFromGallery"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginBottom="28dp" tools:ignore="SpeakableTextPresentCheck"
+                    android:onClick="returnFromGalleryClick"/>
+        </com.theartofdev.edmodo.cropper.CropImageView>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

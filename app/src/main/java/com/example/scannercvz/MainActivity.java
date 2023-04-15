@@ -11,14 +11,15 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.ImageView;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import com.chaquo.python.PyObject;
+import com.chaquo.python.Python;
+import com.chaquo.python.android.AndroidPlatform;
 import com.websitebeaver.documentscanner.DocumentScanner;
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
@@ -28,7 +29,7 @@ import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 
-import java.io.InputStream;
+import java.io.*;
 
 import static org.opencv.imgproc.Imgproc.COLOR_GRAY2BGRA;
 
@@ -44,9 +45,9 @@ public class MainActivity extends AppCompatActivity {
     private final int CAMERA_PERMISSION_CODE=11;
     private final int WRITE_STORAGE_PERMISSION_CODE=12;
     private TextView versionInfo;
+    private ImageButton imgButton;
 
-    //Mat test= new Mat();
-    //Imgproc.find
+    //Объект класса, который позволяет использовать уже готовый сканер документов
     DocumentScanner documentScanner=new DocumentScanner(this, (croppedImageResults) -> {
         Bitmap image=BitmapFactory.decodeFile(croppedImageResults.get(0));
         ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) croppedImageView.getLayoutParams();
@@ -71,6 +72,7 @@ public class MainActivity extends AppCompatActivity {
     //scanButton.setOnClickListener(new View.OnClickListener) {
 
     //}
+    //Необходимое действие, чтобы убедиться в том, что OpenCV успешно был загружен, иначе он даже не будет работать
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
@@ -88,15 +90,23 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    //Метод для выполнения действий при запуске приложения: установка действий для кнопок, назначение интерфейса и т.п.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        if(!Python.isStarted())
+            Python.start(new AndroidPlatform(this));
+        Python py=Python.getInstance();
+        PyObject pyobj=py.getModule("script");
+
+
         getSupportActionBar().hide();
         croppedImageView=findViewById(R.id.cropped_image_view);
         versionInfo=findViewById(R.id.versionInfo);
         versionInfo.setText("Версия: "+BuildConfig.VERSION_NAME);
+        imgButton=findViewById(R.id.settingsButton);
 
         if(ContextCompat.checkSelfPermission(MainActivity.this,
                 Manifest.permission.CAMERA)== PackageManager.PERMISSION_GRANTED) {
@@ -105,8 +115,10 @@ public class MainActivity extends AppCompatActivity {
             requestCameraPermission();
         }
         //documentScanner.startScan();
+        removeOldScans();
     }
 
+    //Метод проверки и запроса прав на работу с камерой и внутренним хранилищем устройства, без которых приложение может работать некорректно
     private void requestCameraPermission() {
         if(ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.CAMERA)) {
             new AlertDialog.Builder(this)
@@ -132,6 +144,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //Ответ на случай, если права были получены, т.е. имеются, или если они не имеются, чтобы пользователь был об этом уведомлен
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -150,17 +163,86 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //метод для изменения настроек генерации ключа
+    public void settingsSet(View v) {
+        AlertDialog.Builder alert = new AlertDialog.Builder(MainActivity.this);
+        alert.setTitle("Настройки ключа");
+        alert.setMessage("Вы можете изменить ключ и длину генерируемого ЦВЗ");
+        File settingsFile = new File(getApplicationContext().getExternalCacheDir(), "settings.txt");
+        if(!settingsFile.exists()) {
+            try {
+                String data = "0\n0";
+                OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(settingsFile));
+                outputStreamWriter.write(data);
+                outputStreamWriter.close();
+            } catch (IOException e) {
+                //
+            }
+        }
+        int key=0;
+        int length=0;
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(settingsFile));
+            int[] res=new int[2];
+            for(int i=0; i<2; ++i) {
+                res[i]=Integer.parseInt(br.readLine());
+            }
+            br.close();
+            key=res[0];
+            length=res[1];
+        }
+        catch (IOException e) {
+            //
+        }
+        final LinearLayout layout = new LinearLayout(MainActivity.this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        final EditText inputKey = new EditText(MainActivity.this);
+        inputKey.setText(Integer.toString(key));
+        final EditText inputLength = new EditText(MainActivity.this);
+        inputLength.setText(Integer.toString(length));
+        layout.addView(inputKey);
+        layout.addView(inputLength);
+
+        alert.setView(layout);
+        alert.setPositiveButton("Применить", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                try {
+                    int key=Integer.parseInt(String.valueOf(inputKey.getText()));
+                    int length=Integer.parseInt(String.valueOf(inputLength.getText()));
+                    String data = Integer.toString(key)+"\n"+Integer.toString(length);
+                    OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(settingsFile));
+                    outputStreamWriter.write(data);
+                    outputStreamWriter.close();
+                } catch (IOException e) {
+                    //
+                }
+                String value = String.valueOf(getApplicationContext().getFilesDir().toString());
+                versionInfo.append("\n"+value);
+            }
+        });
+
+        alert.setNegativeButton("Вернуться", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                // Canceled.
+            }
+        });
+        alert.show();
+    }
+
+    //метод начала сканирования, создает отдельное окно приложения
     public void scanStart(View v) {
         Intent scannerActivity = new Intent(MainActivity.this, Scanner.class);
         //scannerActivity.putExtra("name", R.id.cropped_image_view);
         startActivity(scannerActivity);
     }
 
+    //метод открытия уже отсканированного документа или какого-то готового изображения, создает отдельное окно приложения
     public void openImage(View v) {
         Intent chooseActivity = new Intent(MainActivity.this, GalleryActivity.class);
         startActivity(chooseActivity);
     }
 
+    //метод, который отвечает при возвращании каких-то данных после работы элементов приложения
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -248,9 +330,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //Тоже необходимая часть для корректной работы OpenCV
     @Override
-    public void onResume()
-    {
+    public void onResume() {
         super.onResume();
         if (!OpenCVLoader.initDebug()) {
             Log.d("OpenCV", "Internal OpenCV library not found. Using OpenCV Manager for initialization");
@@ -259,5 +341,25 @@ public class MainActivity extends AppCompatActivity {
             Log.d("OpenCV", "OpenCV library found inside package. Using it!");
             mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
         }
+    }
+
+    //метод для удаления старых сканов
+    public void removeOldScans() {
+        /*File dirScans=new File(getApplicationContext().getFilesDir().toString(), "Pictures");
+        //versionInfo.append("\n"+dirScans.getPath());
+        if (dirScans.isDirectory()) {
+            String[] children = dirScans.list();
+            for (int i = 0; i < children.length; ++i) {
+                File file=new File(dirScans, children[i]);
+                versionInfo.append("\n"+file.getPath());
+                file.delete();
+                if(file.exists()){
+                    //file.getCanonicalFile().delete();
+                    if(file.exists()){
+                        getApplicationContext().deleteFile(file.getName());
+                    }
+                }
+            }
+        }*/
     }
 }
