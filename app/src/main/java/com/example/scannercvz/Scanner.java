@@ -96,7 +96,13 @@ public class Scanner extends AppCompatActivity {
                         File tempFile4 = new File(getApplicationContext().getExternalCacheDir(), "tmpImage.png");
                         try (FileOutputStream out = new FileOutputStream(tempFile4)) {
                             BitmapDrawable bd=(BitmapDrawable) elem.getDrawable();
-                            bd.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, out);
+                            Mat tmpMat=new Mat();
+                            Bitmap tmpBmp=bd.getBitmap();
+                            Utils.bitmapToMat(tmpBmp, tmpMat);
+                            Imgproc.resize(tmpMat, tmpMat, new Size(512, 512));
+                            Utils.matToBitmap(tmpMat, tmpBmp);
+                            //bd.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, out);
+                            tmpBmp.compress(Bitmap.CompressFormat.PNG, 100, out);
                         } catch (IOException e) {
                             e.printStackTrace();
                         }

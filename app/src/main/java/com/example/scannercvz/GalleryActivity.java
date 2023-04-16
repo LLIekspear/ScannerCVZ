@@ -90,6 +90,8 @@ public class GalleryActivity extends AppCompatActivity {
 
                 //detection(imageMain);
                 //
+                Imgproc.resize(tmp, tmp, new Size(512, 512));
+
                 Bitmap tmpImage1=Bitmap.createBitmap(tmp.cols(), tmp.rows(), Bitmap.Config.ARGB_8888);
                 Utils.matToBitmap(tmp, tmpImage1);
                 File tempFile4 = new File(getApplicationContext().getExternalCacheDir(), "tmpImage.png");
@@ -257,7 +259,7 @@ public class GalleryActivity extends AppCompatActivity {
                 double[] testPixels=new double[16];
                 int[] locs=new int[2];
                 int[] center={centerY, centerX};
-                Log.d("TEST_VALUE", "(25,17): "+Double.toString(complexI.get(25, 17)[0]));
+                //Log.d("TEST_VALUE", "(25,17): "+Double.toString(complexI.get(25, 17)[0]));
                 for(int i=0; i<16; ++i) {
                     locs=watermarkValue(center, i, 16, radius1);
                     testPixels[i]=magI.get(locs[0], locs[1])[0];
@@ -274,10 +276,14 @@ public class GalleryActivity extends AppCompatActivity {
                 for(int i=0; i<256; ++i) {
                     //testPixels[i]=(testPixels[i]-min111)/(max111-min111);
                 }
-                for(int i=0; i<16; ++i) {
-                    line += Double.toString(testPixels[i]) + " ";
-                }
-                line+="\n";
+
+                //TODO для тестов значений пикселей, потом вернемся
+                //for(int i=0; i<16; ++i) {
+                //    line += Double.toString(testPixels[i]) + " ";
+                //}
+                //line+="\n";
+                //
+
                 //int[][] indices=new int[vectorLength][vectorLength];
                 //int[] center={321, 258};
                 //for(int t=0; t<vectorLength; ++t) {
@@ -298,7 +304,7 @@ public class GalleryActivity extends AppCompatActivity {
                     vector.set(i, (int)Math.round(val));
                 }
 
-                textView.append("\n");
+                //textView.append("\n");
                 //for(int i=0; i<vector.size(); ++i) {
                 //    textView.append(Double.toString(vector.get(i))+" ");
                 //}
@@ -306,9 +312,9 @@ public class GalleryActivity extends AppCompatActivity {
 //                textView.append("\n"+Double.toString(pearsonCorCoeff(genVectorDouble, testPixels))+"\n");
                 //textView.append(Double.toString(testPixel1)+" "+Double.toString(testPixel));
                 //textView.append("\n"+Double.toString(pearsonCorCoeff(genVectorDouble, testVector))+"\n");
-                textView.append("\n");
+                //textView.append("\n");
 //                textView.append(Float.toString(correlationCoefficient(temp, vector, vector.size())));
-                textView.append("\n");
+                //textView.append("\n");
                 //textView.append(Double.toString(correlationCoefficient(temp, vector1, vector1.size())));
                 double max=vector1.get(0);
                 double min=vector1.get(0);
@@ -326,12 +332,13 @@ public class GalleryActivity extends AppCompatActivity {
                 ////float test=correlationCoefficient(temp, vector1, vector1.size());
                 ///line+="Norm. vector1: "+Float.toString(test)+" "+Double.toString(max)+" "+Double.toString(min)+" "+"\n";
                 //line+=Integer.toString(centerX)+" "+Integer.toString(centerY);
-                line+="\n";
-                for(int elem : vector){//vector1) {
+
+                //line+="\n";
+                //for(int elem : vector){//vector1) {
                     //line+=" "+Integer.toString(elem);
-                    line+=" "+Integer.toString(Math.round(elem));
-                }
-                textView.append(line);
+                //    line+=" "+Integer.toString(Math.round(elem));
+                //}
+                //textView.append(line);
                 //textView.append(Double.toString(corrFromResource(temp, vector, temp.size())));
 
                 try {
