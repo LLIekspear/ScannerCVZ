@@ -13,7 +13,7 @@
             android:layout_height="0dp" android:id="@+id/linearLayout3" app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintBottom_toBottomOf="parent">
-        <ScrollView android:layout_width="match_parent" android:layout_height="390dp">
+        <ScrollView android:layout_width="match_parent" android:layout_height="378dp">
             <LinearLayout
                     android:orientation="vertical"
                     android:layout_width="match_parent"
@@ -26,26 +26,40 @@
                 android:layout_marginTop="0dp" android:layout_marginEnd="0dp"
         />
         <Button
+                android:scaleX="0"
+                android:scaleY="0"
                 android:text="Выбрать область"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:id="@+id/areaSelection"/>
+                android:layout_width="220dp"
+                android:layout_height="60dp"
+                android:layout_marginStart="100dp"
+                android:layout_marginBottom="0dp" android:id="@+id/areaSelection"/>
         <Button
+                android:scaleX="0"
+                android:scaleY="0"
                 android:text="Предобработка"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:id="@+id/button"/>
+                android:layout_width="220dp"
+                android:layout_height="60dp"
+                android:layout_marginStart="100dp"
+                android:layout_marginBottom="0dp" android:id="@+id/button"/>
         <TextView
-                android:text="Test LOl"
+                android:alpha="0"
+                android:text="Информация о процессе обнаружения ЦВЗ."
                 android:textIsSelectable="true"
-                android:layout_width="388dp"
-                android:layout_height="125dp" android:id="@+id/infoView"
+                android:layout_width="376dp"
+                android:layout_height="113dp" android:id="@+id/infoView"
                 android:textSize="14sp" android:layout_marginTop="10dp"
                 android:layout_marginBottom="40dp"
-                android:layout_marginStart="16dp" android:layout_marginEnd="16dp"/>
+                android:layout_marginStart="16dp" android:layout_marginEnd="16dp"
+                tools:alpha="1"
+        />
         <ImageButton
+                android:alpha="0"
                 android:layout_width="54dp"
                 android:layout_height="54dp" app:srcCompat="?attr/homeAsUpIndicator" android:id="@+id/returnFromScan"
                 android:layout_marginStart="16dp"
                 android:layout_marginBottom="28dp" tools:ignore="SpeakableTextPresentCheck"
-                android:onClick="returnFromScanClick"/>
+                android:onClick="returnFromScanClick"
+                tools:alpha="1"
+        />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".MakeWatermarkActivity">
+
+    <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="409dp"
+            android:layout_height="729dp" tools:layout_editor_absoluteY="1dp" tools:layout_editor_absoluteX="1dp"
+            android:id="@+id/makeWatermarkMainLayout">
+        <Space
+                android:layout_width="match_parent"
+                android:layout_height="255dp"/>
+        <TextView
+                android:alpha="0"
+                android:text="Информация о процессе встаривания невидимого цифрового знака будет отображена здесь."
+                android:textIsSelectable="true"
+                android:layout_width="match_parent"
+                android:layout_height="140dp" android:id="@+id/makeWatermarkInfoText"
+                tools:alpha="1"
+        />
+        <Button
+                android:scaleX="0"
+                android:scaleY="0"
+                android:text="Выбрать изображение"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/makeWatermarkChoosePhotoButton"/>
+        <Button
+                android:scaleX="0"
+                android:scaleY="0"
+                android:text="Сделать снимок"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:id="@+id/makeWatermarkMakePhotoButton"/>
+        <ImageButton
+                android:alpha="0"
+                android:layout_width="54dp"
+                android:layout_height="54dp" app:srcCompat="?attr/homeAsUpIndicator" android:id="@+id/returnFromScan"
+                android:layout_marginStart="16dp"
+                android:layout_marginBottom="28dp" tools:ignore="SpeakableTextPresentCheck"
+                android:onClick="returnFromScanClick"
+                tools:alpha="1"
+        />
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -2,9 +2,9 @@ import random
 import math
 import imageio
 import numpy
-from numpy.fft import fft2, fftshift
+from numpy.fft import fft2, ifft2, fftshift, ifftshift
 from scipy.stats.stats import pearsonr
-from scipy.fftpack import dct
+from scipy.fftpack import dct, idct
 from skimage.util import view_as_blocks
 
 def main(path, key, length):
@@ -174,7 +174,7 @@ def dftDetect(path, key, length):
     res=[]
     for i in range(len(indices)):
         res.append(get_bitDFT(checkNearPixels(image, indices[i][0], indices[i][1]), 12200)) #1170 old for alpha=1000, now alpha=30000
-    return 0 if pearsonr(vector, res)[0]>0.5 else 1
+    return 0 if pearsonr(vector, res)[0]>0.3 else 1 #old=0.5, optimal=0.4
     
 def abs_diff_coefs(transform, u1, v1, u2, v2):
     return abs(transform[u1, v1])-abs(transform[u2, v2])
@@ -186,17 +186,80 @@ def get_bit(block, u1, v1, u2, v2):
 def get_message(img, length, n, u1, v1, u2, v2):
     blocks=view_as_blocks(img[:, :, 2], block_shape=(n, n))
     h=blocks.shape[1]
-    return [get_bit(blocks[index//h, index%h], u1, v1, u2, v2) for index in range(length)]\
-    
+    return [get_bit(blocks[index//h, index%h], u1, v1, u2, v2) for index in range(length)]
+
+def double_to_byte(arr):
+    return numpy.uint8(numpy.round(numpy.clip(arr, 0, 255), 0))
+
+def increment_abs(x):
+    return x+1 if x>=0 else x-1
+
+def decrement_abs(x):
+    if numpy.abs(x)<=1:
+        return 0
+    else:
+        return x-1 if x>=0 else x+1
+
+def valid_coeffs(transform, bit, threshold, u1, v1, u2, v2):
+    difference=abs_diff_coefs(transform, u1, v1, u2, v2)
+    if(bit==0 and difference>threshold):
+        return True
+    elif(bit==1 and difference<-threshold):
+        return True
+    else:
+        return False
+
+def change_coeffs(transform, bit, u1, v1, u2, v2):
+    coefs=transform.copy()
+    if bit==0:
+        coefs[u1,v1]=increment_abs(coefs[u1,v1])
+        coefs[u2,v2]=decrement_abs(coefs[u2,v2])
+    elif bit==1:
+        coefs[u1,v1]=decrement_abs(coefs[u1,v1])
+        coefs[u2,v2]=increment_abs(coefs[u2,v2])
+    return coefs
+
+def embed_bit(block, bit, p, u1, v1, u2, v2, n):
+    patch=block.copy()
+    coefs=dct(dct(patch, axis=0), axis=1)
+    while not valid_coeffs(coefs, bit, p, u1, v1, u2, v2) or (bit!=get_bit(patch, u1, v1, u2, v2)):
+        coefs=change_coeffs(coefs, bit, u1, v1, u2, v2) # тут ошибка
+        patch=double_to_byte(idct(idct(coefs, axis=0), axis=1)/(2*n)**2)
+    return patch
+
+def embedMessage(origPath, key, length, u1, v1, u2, v2, n, p):#=1):
+    try:
+        msg=randomVector(key, length)
+        orig=imageio.imread(origPath)
+        changed=orig.copy()
+        blue=changed[:, :, 2]
+        blocks=view_as_blocks(blue, block_shape=(n,n))
+        h=blocks.shape[1]
+        for index, bit in enumerate(msg):
+            i=index//h
+            j=index%h
+            block=blocks[i,j]
+            blue[i*n: (i+1)*n, j*n: (j+1)*n]=embed_bit(block, bit, p, u1, v1, u2, v2, n)
+        changed[:, :, 2]=blue
+    #return changed
+        imageio.imsave(origPath, changed)
+#        return "Success!"
+        return 1
+    except:
+        return -1
+#        return "Error"
+#    return 1
+
 def dctDetect(path, key, length, u1, v1, u2, v2, n):
     #try:
         image1 = imageio.imread(path)
         cvz=randomVector(key, length)
         a=get_message(image1, length, n, u1, v1, u2, v2)
         res=pearsonr(cvz, list(a))[0]
-        return 0 if res>0.3 else 1
+        return 0 if res>0.3 else 1 #old=0.5, optimal=0.4
     #except:
     #    return 2
+
 def dctExtract(path, key, length, u1, v1, u2, v2, n):
     try:
         image1 = imageio.imread(path)
@@ -205,3 +268,102 @@ def dctExtract(path, key, length, u1, v1, u2, v2, n):
         return a
     except:
         return "Ошибка при извлечении... Проверьте размер изображения."
+
+def applyWatermark1(img, watermark, alpha):
+    shiftedDFT=fftshift(fft2(img))
+    watermarkedDFT=shiftedDFT+alpha*watermark
+    watermarkImg=ifft2(ifftshift(watermarkedDFT))
+    return watermarkImg
+
+def makeWatermark1(imgShape, radius, secretKey, length=10):
+    watermark=numpy.zeros(imgShape)
+    center=(int(imgShape[0]/2) +1, int(imgShape[1] /2) +1)
+    vector=randomVector(secretKey, length)
+    indices=[watermarkValue(center, t, length, int(radius)) for t in range(length)]
+    for i, location in enumerate(indices):
+        watermark[location]=vector[i]
+    return watermark
+
+#def dftEncode(data, alpha, secretKey, length):#path1, alpha, secretKey, length):
+#    image1=imageio.imread(path, as_gray=True)
+#    watermark=makeWatermark1(image1.shape, (min(image1.shape)/4)+5, secretKey, length)
+#    watermarked=numpy.real(applyWatermark1(image1, watermark, alpha))
+#    #imageio.imwrite(path1, watermarked)
+#    imageio.imsave(path, watermarked)
+#    return 0
+def dftEncode(path, alpha, secretKey, length):#path1, alpha, secretKey, length):
+    image1=imageio.imread(path, as_gray=True)
+    watermark=makeWatermark1(image1.shape, (min(image1.shape)/4)+5, secretKey, length)
+    watermarked=numpy.real(applyWatermark1(image1, watermark, alpha))
+    #imageio.imwrite(path1, watermarked)
+    imageio.imsave(path, watermarked)
+    return 0
+
+def hide_data(path, secretKey, length):#, path2, secretKey, length):
+    try:
+        image1=imageio.imread(path, as_gray=False, pilmode="RGB")
+        nBytes=image1.shape[0]*image1.shape[1]*3//8
+        secretMsg="".join(str(elem) for elem in randomVector(secretKey, length))
+        if len(secretMsg)<nBytes:
+            dataIndex=0
+            bin_secret_msg=msg_to_bin(secretMsg)
+            dataLen=len(bin_secret_msg)
+            for values in image1:
+                for pixels in values:
+                    r,g,b=msg_to_bin(pixels)
+                    if dataIndex < dataLen:
+                        pixels[0]=int(r[:-1]+bin_secret_msg[dataIndex], 2)
+                        dataIndex+=1
+                    if dataIndex < dataLen:
+                        pixels[1]=int(g[:-1]+bin_secret_msg[dataIndex], 2)
+                        dataIndex+=1
+                    if dataIndex<dataLen:
+                        pixels[2]=int(b[:-1]+bin_secret_msg[dataIndex], 2)
+                        dataIndex+=1
+                    if dataIndex>=dataLen:
+                        break
+        #imageio.imwrite(path2, image1)
+        imageio.imsave(path, image1)
+        return 2
+        #return "Success"
+    except:
+        return -1
+
+def msg_to_bin(msg):
+    if type(msg) == str:
+        return ''.join([format(ord(i), "08b") for i in msg])
+    return [format(i, "08b") for i in msg]
+
+def show_data(img, length):
+    bin_data=""
+    for values in img:
+        for pixels in values:
+            r,g,b=msg_to_bin(pixels)
+            bin_data+=r[-1]
+            bin_data+=g[-1]
+            bin_data+=b[-1]
+    allBytes=[bin_data[i: i+8] for i in range(0, len(bin_data), 8)]
+    decodedData=""
+    for bytes in allBytes:
+        decodedData+=chr(int(bytes, 2))
+    return decodedData[:-5][:length]
+
+def lsbDetection(path, key, length):
+    try:
+        image1=imageio.imread(path, as_gray=False, pilmode="RGB")
+        data=show_data(image1, length)
+        cvz=randomVector(key, length)
+        lint=[int(x) for x in list(data)]
+        res=pearsonr(cvz, lint)[0]
+        return 0 if res>0.5 else 1
+    except:
+        return -1;
+def lsbExtract(path, key, length):
+    try:
+        image1=imageio.imread(path, as_gray=False, pilmode="RGB")
+        data=show_data(image1, length)
+        #cvz=randomVector(key, length)
+        #res=pearsonr(cvz, list(data))[0]
+        return data
+    except:
+        return "Ошибка при извлечении..."

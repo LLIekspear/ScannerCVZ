@@ -11,12 +11,16 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.*;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.ViewPropertyAnimatorCompat;
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
@@ -46,6 +50,12 @@ public class MainActivity extends AppCompatActivity {
     private final int WRITE_STORAGE_PERMISSION_CODE=12;
     private TextView versionInfo;
     private ImageButton imgButton;
+    private Button makeWatermarkButton;
+
+    public static final int STARTUP_DELAY=300;
+    public static final int ANIM_ITEM_DURATION=1000;
+    public static final int ITEM_DELAY=300;
+    private boolean animationStarted=false;
 
     //Объект класса, который позволяет использовать уже готовый сканер документов
     DocumentScanner documentScanner=new DocumentScanner(this, (croppedImageResults) -> {
@@ -107,6 +117,15 @@ public class MainActivity extends AppCompatActivity {
         versionInfo=findViewById(R.id.versionInfo);
         versionInfo.setText("Версия: "+BuildConfig.VERSION_NAME);
         imgButton=findViewById(R.id.settingsButton);
+        makeWatermarkButton=findViewById(R.id.makeWatermarkActivityButton);
+
+        makeWatermarkButton.setOnClickListener (new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent makeWatermarkActivity = new Intent(MainActivity.this, MakeWatermarkActivity.class);
+                startActivity(makeWatermarkActivity);
+            }
+        });
 
         if(ContextCompat.checkSelfPermission(MainActivity.this,
                 Manifest.permission.CAMERA)== PackageManager.PERMISSION_GRANTED) {
@@ -171,7 +190,7 @@ public class MainActivity extends AppCompatActivity {
         File settingsFile = new File(getApplicationContext().getExternalCacheDir(), "settings.txt");
         if(!settingsFile.exists()) {
             try {
-                String data = "0\n0";
+                String data = "0\n0\n0";
                 OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(settingsFile));
                 outputStreamWriter.write(data);
                 outputStreamWriter.close();
@@ -181,15 +200,17 @@ public class MainActivity extends AppCompatActivity {
         }
         int key=0;
         int length=0;
+        int alg=0;
         try {
             BufferedReader br = new BufferedReader(new FileReader(settingsFile));
-            int[] res=new int[2];
-            for(int i=0; i<2; ++i) {
+            int[] res=new int[3];
+            for(int i=0; i<3; ++i) {
                 res[i]=Integer.parseInt(br.readLine());
             }
             br.close();
             key=res[0];
             length=res[1];
+            alg=res[2];
         }
         catch (IOException e) {
             //
@@ -200,8 +221,31 @@ public class MainActivity extends AppCompatActivity {
         inputKey.setText(Integer.toString(key));
         final EditText inputLength = new EditText(MainActivity.this);
         inputLength.setText(Integer.toString(length));
+        final Spinner selectedAlg=new Spinner(MainActivity.this);
+
+        String[] algs={"Фурье", "Косинусное", "LSB"};
+        ArrayAdapter<String> adapter=new ArrayAdapter(MainActivity.this, android.R.layout.simple_spinner_item, algs);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        selectedAlg.setAdapter(adapter);
+        selectedAlg.setSelection(alg);
+        AdapterView.OnItemSelectedListener itemSelectedListener=new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                //String item=(String)adapterView.getItemAtPosition(i);
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        };
+
         layout.addView(inputKey);
         layout.addView(inputLength);
+        layout.addView(selectedAlg);
+
+        String selectedAlgString=(String)selectedAlg.getSelectedItem();
 
         alert.setView(layout);
         alert.setPositiveButton("Применить", new DialogInterface.OnClickListener() {
@@ -209,15 +253,16 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     int key=Integer.parseInt(String.valueOf(inputKey.getText()));
                     int length=Integer.parseInt(String.valueOf(inputLength.getText()));
-                    String data = Integer.toString(key)+"\n"+Integer.toString(length);
+                    int selectedAlgInteger=selectedAlg.getSelectedItemPosition();
+                    String data = Integer.toString(key)+"\n"+Integer.toString(length)+"\n"+Integer.toString(selectedAlgInteger)+"\n";
                     OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(settingsFile));
                     outputStreamWriter.write(data);
                     outputStreamWriter.close();
                 } catch (IOException e) {
                     //
                 }
-                String value = String.valueOf(getApplicationContext().getFilesDir().toString());
-                versionInfo.append("\n"+value);
+                //String value = String.valueOf(getApplicationContext().getFilesDir().toString());
+                //versionInfo.append("\n"+value);
             }
         });
 
@@ -343,6 +388,40 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        if(!hasFocus||animationStarted) {
+            return;
+        }
+        animate();
+        super.onWindowFocusChanged(hasFocus);
+    }
+    public void animate() {
+        ViewGroup container=(ViewGroup) findViewById(R.id.linearLayout);
+
+        ViewCompat.animate(imgButton)
+                .translationY(-250)
+                .setStartDelay(STARTUP_DELAY)
+                .setDuration(ANIM_ITEM_DURATION).setInterpolator(
+                        new DecelerateInterpolator(1.2f)).start();
+
+        for(int i=0; i<container.getChildCount(); ++i) {
+            View v=container.getChildAt(i);
+            ViewPropertyAnimatorCompat viewAnimator=null;
+            if(!(v instanceof Button)) {
+                viewAnimator= ViewCompat.animate(v)
+                        .translationY(50).alpha(1)
+                        .setStartDelay((ITEM_DELAY*i)+500)
+                        .setDuration(1000);
+            } else if(!(v instanceof ImageButton)) {
+                viewAnimator=ViewCompat.animate(v)
+                        .scaleY(1).scaleX(1)
+                        .setStartDelay((ITEM_DELAY*i)+500)
+                        .setDuration(500);
+            }
+            viewAnimator.setInterpolator(new DecelerateInterpolator()).start();
+        }
+    }
     //метод для удаления старых сканов
     public void removeOldScans() {
         /*File dirScans=new File(getApplicationContext().getFilesDir().toString(), "Pictures");

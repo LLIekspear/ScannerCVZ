@@ -11,8 +11,12 @@ import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.ViewPropertyAnimatorCompat;
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
 import com.theartofdev.edmodo.cropper.CropImage;
@@ -45,6 +49,11 @@ public class GalleryActivity extends AppCompatActivity {
     TextView textView;
     int[] indexX=new int[256];
     int[] indexY=new int[256];
+
+    public static final int STARTUP_DELAY=300;
+    public static final int ANIM_ITEM_DURATION=1000;
+    public static final int ITEM_DELAY=300;
+    private boolean animationStarted=false;
 
     //метод, вызываемый при создании данного фрагмента приложения. Назначает интерфейс, действия при нажатии на определенные кнопки и т.п.
     @Override
@@ -82,6 +91,7 @@ public class GalleryActivity extends AppCompatActivity {
                 int[] info=getSettings();
                 int key=info[0];
                 int vectorLength=info[1];
+                int alg=info[2];
                 int u1=4;
                 int v1=5;
                 int u2=5;
@@ -90,7 +100,8 @@ public class GalleryActivity extends AppCompatActivity {
 
                 //detection(imageMain);
                 //
-                Imgproc.resize(tmp, tmp, new Size(512, 512));
+                if(alg!=2)
+                    Imgproc.resize(tmp, tmp, new Size(512, 512));
 
                 Bitmap tmpImage1=Bitmap.createBitmap(tmp.cols(), tmp.rows(), Bitmap.Config.ARGB_8888);
                 Utils.matToBitmap(tmp, tmpImage1);
@@ -342,82 +353,155 @@ public class GalleryActivity extends AppCompatActivity {
                 //textView.append(Double.toString(corrFromResource(temp, vector, temp.size())));
 
                 try {
-                    int dDCT=detectionDCT(tempFile4.getPath(), key, vectorLength, u1, v1, u2, v2, N);
-                    //extractionDCT(tempFile4.getPath(), key, vectorLength, u1, v1, u2, v2, N);
-                    if(dDCT==0) {
-                        //ЦВЗ был обнаружен
-                        Toast.makeText(GalleryActivity.this, "ЦВЗ был обнаружен и успешно извлечен в основном изображении!", Toast.LENGTH_SHORT).show();
-                        extractionDCT(tempFile4.getPath(), key, vectorLength, u1, v1, u2, v2, N);
-                    } else if(dDCT==1) {
-                        //ЦВЗ не обнаружен
-                        Toast.makeText(GalleryActivity.this, "ЦВЗ не был обнаружен в основном изображении!", Toast.LENGTH_SHORT).show();
-                    } else if(dDCT==2) {
-                        //ошибка с размерами изображения или иная ошибка (не сохранилось временное изображение, ошибка в программе)
-                        Toast.makeText(GalleryActivity.this, "Возникла какая-то ошибка (проверьте права приложения или код программы)!", Toast.LENGTH_SHORT).show();
-                    }
-                    for(ImageView elem : selectedImagesIds) {
-                        tempFile4 = new File(getApplicationContext().getExternalCacheDir(), "tmpImage.png");
-                        try (FileOutputStream out = new FileOutputStream(tempFile4)) {
-                            BitmapDrawable bd=(BitmapDrawable) elem.getDrawable();
-                            bd.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, out);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        dDCT=detectionDCT(tempFile4.getPath(), key, vectorLength, u1, v1, u2, v2, N);
-                        //dDCT=3;
+                    if(alg==1) {
+                        int dDCT=detectionDCT(tempFile4.getPath(), key, vectorLength, u1, v1, u2, v2, N);
+                        //extractionDCT(tempFile4.getPath(), key, vectorLength, u1, v1, u2, v2, N);
                         if(dDCT==0) {
                             //ЦВЗ был обнаружен
-                            Toast.makeText(GalleryActivity.this, "ЦВЗ был обнаружен и успешно извлечен!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(GalleryActivity.this, "ЦВЗ был обнаружен и успешно извлечен в основном изображении!", Toast.LENGTH_SHORT).show();
                             extractionDCT(tempFile4.getPath(), key, vectorLength, u1, v1, u2, v2, N);
                         } else if(dDCT==1) {
                             //ЦВЗ не обнаружен
-                            Toast.makeText(GalleryActivity.this, "ЦВЗ не был обнаружен!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(GalleryActivity.this, "ЦВЗ не был обнаружен в основном изображении!", Toast.LENGTH_SHORT).show();
                         } else if(dDCT==2) {
                             //ошибка с размерами изображения или иная ошибка (не сохранилось временное изображение, ошибка в программе)
                             Toast.makeText(GalleryActivity.this, "Возникла какая-то ошибка (проверьте права приложения или код программы)!", Toast.LENGTH_SHORT).show();
                         }
-                    }
-                } catch(Exception error) {
-                    Toast.makeText(GalleryActivity.this, "Возникла какая-то ошибка (проверьте права приложения или код программы)!", Toast.LENGTH_SHORT).show();
-                }
-                try {
-                    double dDFT=detectionDFT(tempFile4.getPath(), key, vectorLength);
-                    if(dDFT==0) {
-                        //ЦВЗ был обнаружен
-                        Toast.makeText(GalleryActivity.this, "ЦВЗ был обнаружен и успешно извлечен в основном изображении!", Toast.LENGTH_SHORT).show();
-                        extractionDFT();
-                    } else if(dDFT==1) {
-                        //ЦВЗ не обнаружен
-                        Toast.makeText(GalleryActivity.this, "ЦВЗ не был обнаружен в основном изображении!", Toast.LENGTH_SHORT).show();
-                    } else if(dDFT==2) {
-                        //ошибка с размерами изображения или иная ошибка (не сохранилось временное изображение, ошибка в программе)
-                        Toast.makeText(GalleryActivity.this, "Возникла какая-то ошибка (проверьте права приложения или код программы)!", Toast.LENGTH_SHORT).show();
-                    }
-                    for(ImageView elem : selectedImagesIds) {
-                        tempFile4 = new File(getApplicationContext().getExternalCacheDir(), "tmpImage.png");
-                        try (FileOutputStream out = new FileOutputStream(tempFile4)) {
-                            BitmapDrawable bd=(BitmapDrawable) elem.getDrawable();
-                            bd.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, out);
-                        } catch (IOException e) {
-                            e.printStackTrace();
+
+                        for(ImageView elem : selectedImagesIds) {
+                            tempFile4 = new File(getApplicationContext().getExternalCacheDir(), "tmpImage.png");
+                            try (FileOutputStream out = new FileOutputStream(tempFile4)) {
+                                BitmapDrawable bd = (BitmapDrawable) elem.getDrawable();
+                                bd.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, out);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            dDCT = detectionDCT(tempFile4.getPath(), key, vectorLength, u1, v1, u2, v2, N);
+                            //dDCT=3;
+                            if (dDCT == 0) {
+                                //ЦВЗ был обнаружен
+                                Toast.makeText(GalleryActivity.this, "ЦВЗ был обнаружен и успешно извлечен!", Toast.LENGTH_SHORT).show();
+                                extractionDCT(tempFile4.getPath(), key, vectorLength, u1, v1, u2, v2, N);
+                            } else if (dDCT == 1) {
+                                //ЦВЗ не обнаружен
+                                Toast.makeText(GalleryActivity.this, "ЦВЗ не был обнаружен!", Toast.LENGTH_SHORT).show();
+                            } else if (dDCT == 2) {
+                                //ошибка с размерами изображения или иная ошибка (не сохранилось временное изображение, ошибка в программе)
+                                Toast.makeText(GalleryActivity.this, "Возникла какая-то ошибка (проверьте права приложения или код программы)!", Toast.LENGTH_SHORT).show();
+                            }
                         }
-                        dDFT=detectionDFT(tempFile4.getPath(), key, vectorLength);
+                    } else if(alg==0) {
+                        double dDFT=detectionDFT(tempFile4.getPath(), key, vectorLength);
                         if(dDFT==0) {
                             //ЦВЗ был обнаружен
-                            Toast.makeText(GalleryActivity.this, "ЦВЗ был обнаружен и успешно извлечен!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(GalleryActivity.this, "ЦВЗ был обнаружен и успешно извлечен в основном изображении!", Toast.LENGTH_SHORT).show();
                             extractionDFT();
                         } else if(dDFT==1) {
                             //ЦВЗ не обнаружен
-                            Toast.makeText(GalleryActivity.this, "ЦВЗ не был обнаружен!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(GalleryActivity.this, "ЦВЗ не был обнаружен в основном изображении!", Toast.LENGTH_SHORT).show();
                         } else if(dDFT==2) {
                             //ошибка с размерами изображения или иная ошибка (не сохранилось временное изображение, ошибка в программе)
                             Toast.makeText(GalleryActivity.this, "Возникла какая-то ошибка (проверьте права приложения или код программы)!", Toast.LENGTH_SHORT).show();
                         }
+                        for(ImageView elem : selectedImagesIds) {
+                            tempFile4 = new File(getApplicationContext().getExternalCacheDir(), "tmpImage.png");
+                            try (FileOutputStream out = new FileOutputStream(tempFile4)) {
+                                BitmapDrawable bd=(BitmapDrawable) elem.getDrawable();
+                                bd.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, out);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            dDFT=detectionDFT(tempFile4.getPath(), key, vectorLength);
+                            if(dDFT==0) {
+                                //ЦВЗ был обнаружен
+                                Toast.makeText(GalleryActivity.this, "ЦВЗ был обнаружен и успешно извлечен!", Toast.LENGTH_SHORT).show();
+                                extractionDFT();
+                            } else if(dDFT==1) {
+                                //ЦВЗ не обнаружен
+                                Toast.makeText(GalleryActivity.this, "ЦВЗ не был обнаружен!", Toast.LENGTH_SHORT).show();
+                            } else if(dDFT==2) {
+                                //ошибка с размерами изображения или иная ошибка (не сохранилось временное изображение, ошибка в программе)
+                                Toast.makeText(GalleryActivity.this, "Возникла какая-то ошибка (проверьте права приложения или код программы)!", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    } else if(alg==2) {
+                        //LSB Extract
+                        double dLSB=detectionLSB(tempFile4.getPath(), key, vectorLength);
+                        if(dLSB==0) {
+                            //ЦВЗ был обнаружен
+                            Toast.makeText(GalleryActivity.this, "ЦВЗ был обнаружен и успешно извлечен в основном изображении!(LSB)", Toast.LENGTH_SHORT).show();
+                            extractionLSB();
+                        } else if(dLSB==1) {
+                            //ЦВЗ не обнаружен
+                            Toast.makeText(GalleryActivity.this, "ЦВЗ не был обнаружен в основном изображении!", Toast.LENGTH_SHORT).show();
+                        } else if(dLSB==2) {
+                            //ошибка с размерами изображения или иная ошибка (не сохранилось временное изображение, ошибка в программе)
+                            Toast.makeText(GalleryActivity.this, "Возникла какая-то ошибка (проверьте права приложения или код программы)!", Toast.LENGTH_SHORT).show();
+                        }
+                        for(ImageView elem : selectedImagesIds) {
+                            tempFile4 = new File(getApplicationContext().getExternalCacheDir(), "tmpImage.png");
+                            try (FileOutputStream out = new FileOutputStream(tempFile4)) {
+                                BitmapDrawable bd=(BitmapDrawable) elem.getDrawable();
+                                bd.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, out);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            dLSB=detectionLSB(tempFile4.getPath(), key, vectorLength);
+                            if(dLSB==0) {
+                                //ЦВЗ был обнаружен
+                                Toast.makeText(GalleryActivity.this, "ЦВЗ был обнаружен и успешно извлечен! (LSB)", Toast.LENGTH_SHORT).show();
+                                extractionLSB();
+                            } else if(dLSB==1) {
+                                //ЦВЗ не обнаружен
+                                Toast.makeText(GalleryActivity.this, "ЦВЗ не был обнаружен!", Toast.LENGTH_SHORT).show();
+                            } else if(dLSB==2) {
+                                //ошибка с размерами изображения или иная ошибка (не сохранилось временное изображение, ошибка в программе)
+                                Toast.makeText(GalleryActivity.this, "Возникла какая-то ошибка (проверьте права приложения или код программы)!", Toast.LENGTH_SHORT).show();
+                            }
+                        }
                     }
                 } catch(Exception error) {
-                    error.printStackTrace();
                     Toast.makeText(GalleryActivity.this, "Возникла какая-то ошибка (проверьте права приложения или код программы)!", Toast.LENGTH_SHORT).show();
+                    error.printStackTrace();
                 }
+//                try {
+//                    double dDFT=detectionDFT(tempFile4.getPath(), key, vectorLength);
+//                    if(dDFT==0) {
+//                        //ЦВЗ был обнаружен
+//                        Toast.makeText(GalleryActivity.this, "ЦВЗ был обнаружен и успешно извлечен в основном изображении!", Toast.LENGTH_SHORT).show();
+//                        extractionDFT();
+//                    } else if(dDFT==1) {
+//                        //ЦВЗ не обнаружен
+//                        Toast.makeText(GalleryActivity.this, "ЦВЗ не был обнаружен в основном изображении!", Toast.LENGTH_SHORT).show();
+//                    } else if(dDFT==2) {
+//                        //ошибка с размерами изображения или иная ошибка (не сохранилось временное изображение, ошибка в программе)
+//                        Toast.makeText(GalleryActivity.this, "Возникла какая-то ошибка (проверьте права приложения или код программы)!", Toast.LENGTH_SHORT).show();
+//                    }
+//                    for(ImageView elem : selectedImagesIds) {
+//                        tempFile4 = new File(getApplicationContext().getExternalCacheDir(), "tmpImage.png");
+//                        try (FileOutputStream out = new FileOutputStream(tempFile4)) {
+//                            BitmapDrawable bd=(BitmapDrawable) elem.getDrawable();
+//                            bd.getBitmap().compress(Bitmap.CompressFormat.PNG, 100, out);
+//                        } catch (IOException e) {
+//                            e.printStackTrace();
+//                        }
+//                        dDFT=detectionDFT(tempFile4.getPath(), key, vectorLength);
+//                        if(dDFT==0) {
+//                            //ЦВЗ был обнаружен
+//                            Toast.makeText(GalleryActivity.this, "ЦВЗ был обнаружен и успешно извлечен!", Toast.LENGTH_SHORT).show();
+//                            extractionDFT();
+//                        } else if(dDFT==1) {
+//                            //ЦВЗ не обнаружен
+//                            Toast.makeText(GalleryActivity.this, "ЦВЗ не был обнаружен!", Toast.LENGTH_SHORT).show();
+//                        } else if(dDFT==2) {
+//                            //ошибка с размерами изображения или иная ошибка (не сохранилось временное изображение, ошибка в программе)
+//                            Toast.makeText(GalleryActivity.this, "Возникла какая-то ошибка (проверьте права приложения или код программы)!", Toast.LENGTH_SHORT).show();
+//                        }
+//                    }
+//                } catch(Exception error) {
+//                    error.printStackTrace();
+//                    Toast.makeText(GalleryActivity.this, "Возникла какая-то ошибка (проверьте права приложения или код программы)!", Toast.LENGTH_SHORT).show();
+//                }
             }
         });
 
@@ -439,6 +523,22 @@ public class GalleryActivity extends AppCompatActivity {
         }
         textView.append(line);
         return res;
+    }
+
+    public double detectionLSB(String path, int key, int length) {
+        Python py=Python.getInstance();
+        PyObject pyobj=py.getModule("script");
+        PyObject obj=pyobj.callAttr("lsbDetection", path, key, length);
+        double res=obj.toDouble();
+        if(res==0)
+            textView.append("\nОбнаружен встроенный в изображение методом LSB ЦВЗ!");
+        else
+            textView.append("\nНе обнаружен встроенный в изображение методом LSB ЦВЗ!");
+        return res;
+    }
+
+    public void extractionLSB() {
+        //
     }
 
     public double detectionDFT(String path, int key, int length) {
@@ -894,16 +994,16 @@ public class GalleryActivity extends AppCompatActivity {
 
     public int[] getSettings() {
         File settingsFile = new File(getApplicationContext().getExternalCacheDir(), "settings.txt");
-        int[] res=new int[2];
+        int[] res=new int[3];
         try {
             if(!settingsFile.exists()) {
-                String data = "0\n0";
+                String data = "0\n0\n0";
                 OutputStreamWriter outputStreamWriter = new OutputStreamWriter(new FileOutputStream(settingsFile));
                 outputStreamWriter.write(data);
                 outputStreamWriter.close();
             }
             BufferedReader br = new BufferedReader(new FileReader(settingsFile));
-            for (int i = 0; i < 2; ++i) {
+            for (int i = 0; i < 3; ++i) {
                 res[i] = Integer.parseInt(br.readLine());
             }
             br.close();
@@ -911,5 +1011,34 @@ public class GalleryActivity extends AppCompatActivity {
             //
         }
         return res;
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        if(!hasFocus||animationStarted) {
+            return;
+        }
+        animate();
+        super.onWindowFocusChanged(hasFocus);
+    }
+    public void animate() {
+        ViewGroup container=(ViewGroup) findViewById(R.id.linearLayout2);
+
+        for(int i=0; i<container.getChildCount(); ++i) {
+            View v=container.getChildAt(i);
+            ViewPropertyAnimatorCompat viewAnimator;
+            if(!(v instanceof Button)) {
+                viewAnimator= ViewCompat.animate(v)
+                        .translationY(50).alpha(1)
+                        .setStartDelay((ITEM_DELAY*i)+500)
+                        .setDuration(1000);
+            } else {
+                viewAnimator=ViewCompat.animate(v)
+                        .scaleY(1).scaleX(1)
+                        .setStartDelay((ITEM_DELAY*i)+500)
+                        .setDuration(500);
+            }
+            viewAnimator.setInterpolator(new DecelerateInterpolator()).start();
+        }
     }
 }

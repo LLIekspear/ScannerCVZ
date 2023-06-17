@@ -27,35 +27,51 @@
             </LinearLayout>
         </ScrollView>
         <Button
+                android:scaleX="0"
+                android:scaleY="0"
+                android:layout_width="220dp"
+                android:layout_height="60dp"
+                android:layout_marginStart="100dp"
+                android:layout_marginBottom="0dp"
                 android:text="Выбрать область"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:id="@+id/selectOther"
+                android:id="@+id/selectOther"
         />
         <Button
+                android:scaleX="0"
+                android:scaleY="0"
                 android:text="Предобработка"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" android:id="@+id/preprocess"/>
+                android:layout_width="220dp"
+                android:layout_height="60dp"
+                android:layout_marginStart="100dp"
+                android:layout_marginBottom="0dp"
+                android:id="@+id/preprocess"/>
         <TextView
-                android:text="Test LOl"
+                android:alpha="0"
+                android:text="Информация о процессе обнаружения ЦВЗ."
                 android:textIsSelectable="true"
-                android:layout_width="393dp"
-                android:layout_height="193dp" android:id="@+id/infoView2"
+                android:layout_width="381dp"
+                android:layout_height="119dp" android:id="@+id/infoView2"
                 android:textSize="14sp" android:layout_marginTop="10dp"
                 android:layout_marginBottom="40dp"
-                android:layout_marginStart="16dp" android:layout_marginEnd="16dp"/>
+                android:layout_marginStart="16dp" android:layout_marginEnd="16dp"
+                tools:alpha="1"
+        />
         <com.theartofdev.edmodo.cropper.CropImageView
                 android:id="@+id/cropImageView"
                 android:layout_width="match_parent"
                 android:layout_height="107dp"
                 android:layout_weight="1">
-            <ImageButton
-                    android:layout_width="54dp"
-                    android:layout_height="54dp" app:srcCompat="?attr/homeAsUpIndicator"
-                    android:id="@+id/returnFromGallery"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginBottom="28dp" tools:ignore="SpeakableTextPresentCheck"
-                    android:onClick="returnFromGalleryClick"/>
         </com.theartofdev.edmodo.cropper.CropImageView>
+        <ImageButton
+                android:alpha="0"
+                android:layout_width="54dp"
+                android:layout_height="54dp" app:srcCompat="?attr/homeAsUpIndicator"
+                android:id="@+id/returnFromGallery"
+                android:layout_marginStart="16dp"
+                android:layout_marginBottom="28dp" tools:ignore="SpeakableTextPresentCheck"
+                android:onClick="returnFromGalleryClick"
+                tools:alpha="1"
+        />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

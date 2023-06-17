@@ -15,10 +15,12 @@
         <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Распознавание ЦВЗ"
+                android:alpha="0"
+                android:text="Сканнер ЦВЗ"
                 android:id="@+id/textView"
-                android:layout_marginLeft="120dp"
+                android:layout_marginLeft="145dp"
                 android:layout_marginTop="80dp"
+                tools:alpha="1"
         />
         <ImageView
                 android:layout_width="wrap_content"
@@ -29,35 +31,54 @@
                 android:layout_marginLeft="200dp"
         />
         <Button
+                android:scaleX="0"
+                android:scaleY="0"
+                android:text="Встроить ЦВЗ"
+                android:layout_width="180dp"
+                android:layout_height="60dp" android:id="@+id/makeWatermarkActivityButton"
+                android:layout_marginStart="110dp" android:layout_marginBottom="0dp"
+                android:layout_marginTop="280dp"
+        />
+        <Button
+                android:scaleX="0"
+                android:scaleY="0"
                 android:text="Сканировать"
                 android:layout_width="180dp"
                 android:layout_height="60dp" android:id="@+id/scanNow"
-                android:layout_marginStart="110dp" android:layout_marginBottom="28dp"
                 android:onClick="scanStart"
-                android:layout_marginTop="300dp"
+                android:layout_marginBottom="0dp" android:layout_marginLeft="110dp"
+                android:layout_marginRight="130dp"
+                android:layout_marginTop="0dp"
         />
         <Button
+                android:scaleX="0"
+                android:scaleY="0"
                 android:text="Выбрать из галереи"
                 android:layout_width="180dp"
                 android:layout_height="60dp" android:id="@+id/loadScan"
-                android:layout_marginBottom="60dp" android:onClick="openImage"
+                android:layout_marginBottom="30dp" android:onClick="openImage"
                 android:layout_marginLeft="110dp" android:layout_marginRight="130dp"
                 android:layout_marginTop="0dp"
         />
         <TextView
                 android:text="Версия: None"
+                android:alpha="0"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" android:id="@+id/versionInfo"
-                android:layout_marginBottom="14dp"
+                android:layout_marginBottom="4dp"
                 android:layout_marginLeft="136dp"
                 android:layout_marginTop="0dp"
+                tools:alpha="1"
         />
         <ImageButton
+                android:alpha="0"
                 android:layout_width="wrap_content"
                 android:onClick="settingsSet"
-                android:layout_height="wrap_content" app:srcCompat="@android:drawable/ic_lock_lock"
+                android:layout_height="41dp" app:srcCompat="@android:drawable/ic_lock_lock"
                 android:layout_marginLeft="10dp"
-                android:id="@+id/settingsButton"/>
+                android:id="@+id/settingsButton"
+                tools:alpha="1"
+        />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

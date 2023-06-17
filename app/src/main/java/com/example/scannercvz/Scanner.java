@@ -11,8 +11,12 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.*;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.ViewPropertyAnimatorCompat;
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
 import com.theartofdev.edmodo.cropper.CropImage;
@@ -37,6 +41,11 @@ public class Scanner extends AppCompatActivity {
     TextView infoText;
     int flag=1;
     List<ImageView> selectedImagesIds=new ArrayList<>();
+
+    public static final int STARTUP_DELAY=300;
+    public static final int ANIM_ITEM_DURATION=1000;
+    public static final int ITEM_DELAY=300;
+    private boolean animationStarted=false;
 
 
     //метод, вызываемый при создании данного фрагмента приложения. Назначает интерфейс, действия при нажатии на определенные кнопки и т.п.
@@ -413,5 +422,34 @@ public class Scanner extends AppCompatActivity {
         else
             infoText.append("\nНе обнаружен встроенный в изображение методом DFT ЦВЗ!");
         return res;
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        if(!hasFocus||animationStarted) {
+            return;
+        }
+        animate();
+        super.onWindowFocusChanged(hasFocus);
+    }
+    public void animate() {
+        ViewGroup container=(ViewGroup) findViewById(R.id.linearLayout3);
+
+        for(int i=0; i<container.getChildCount(); ++i) {
+            View v=container.getChildAt(i);
+            ViewPropertyAnimatorCompat viewAnimator;
+            if(!(v instanceof Button)) {
+                viewAnimator= ViewCompat.animate(v)
+                        .translationY(50).alpha(1)
+                        .setStartDelay((ITEM_DELAY*i)+500)
+                        .setDuration(1000);
+            } else {
+                viewAnimator=ViewCompat.animate(v)
+                        .scaleY(1).scaleX(1)
+                        .setStartDelay((ITEM_DELAY*i)+500)
+                        .setDuration(500);
+            }
+            viewAnimator.setInterpolator(new DecelerateInterpolator()).start();
+        }
     }
 }
